@@ -55,9 +55,11 @@ func (s *ShopAccount) Login() error {
 	}
 	response := LoginResponse{}
 	err := http_client.Post(fmt.Sprintf(loginURL, ShopAddr), "", req, &response)
-	fmt.Println(response.Data.Token)
 	if err != nil {
 		return err
+	}
+	if response.Code != 0 {
+		return fmt.Errorf("商城登录失败: %s", response.Msg)
 	}
 	s.token = response.Data.Token
 	return nil
@@ -91,14 +93,17 @@ type ShopUserInfo struct {
 	} `json:"data"`
 }
 
-func (s *ShopAccount) Info() (string, error) {
+func (s *ShopAccount) Info() error {
 	response := ShopUserInfo{}
 	err := http_client.Get(fmt.Sprintf("%s/user/info", ShopAddr), s.token, nil, &response)
 	if err != nil {
-		return "", err
+		return err
+	}
+	if response.Code != 0 {
+		return fmt.Errorf("获取用户信息失败: %s", response.Msg)
 	}
 	s.UserInfo = &response
-	return response.Data.NickName, err
+	return err
 }
 
 type CreateOrderRequest struct {
@@ -152,6 +157,9 @@ func (s *ShopAccount) CreateOrder(id string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if resp.Code != 0 {
+		return "", fmt.Errorf("创建订单失败: %s", resp.Msg)
+	}
 	return resp.Data.Id, err
 }
 
@@ -165,6 +173,12 @@ func (s *ShopAccount) PayOrder(orderId string) (string, error) {
 	}
 	resp := BaseResponse{}
 	err := http_client.Post(fmt.Sprintf(PayOrderURL, ShopAddr, orderId), s.token, request, &resp)
+	if err != nil {
+		return "", err
+	}
+	if resp.Code != 0 {
+		return "", fmt.Errorf("支付订单失败: %s", resp.Msg)
+	}
 	return resp.Msg, err
 }
 
@@ -204,6 +218,12 @@ type GetHXOrderResp struct {
 func (s *ShopAccount) GetHXOrder() ([]string, error) {
 	resp := GetHXOrderResp{}
 	err := http_client.Get(fmt.Sprintf(HxOrderURL, ShopAddr), s.token, nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Code != 0 {
+		return nil, fmt.Errorf("获取订单失败: %s", resp.Msg)
+	}
 	response := make([]string, 0)
 	for _, v := range resp.Data {
 		response = append(response, v.Id)

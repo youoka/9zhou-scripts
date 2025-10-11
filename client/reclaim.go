@@ -25,15 +25,21 @@ type ReclaimAccount struct {
 func NewReclaimAccount(account string, passWord string) *ReclaimAccount {
 	return &ReclaimAccount{Account: account, PassWord: passWord}
 }
-func (r *ReclaimAccount) Login() (string, error) {
+func (r *ReclaimAccount) Login() error {
 	req := LoginReq{
 		Account:  r.Account,
 		PassWord: r.PassWord,
 	}
 	response := LoginResponse{}
 	err := http_client.Post(fmt.Sprintf(ReclaimLoginURL, ReclaimApi), "", req, &response)
+	if err != nil {
+		return err
+	}
+	if response.Code != 0 && response.Code != 200 {
+		return fmt.Errorf("核销登录失败: %s", response.Msg)
+	}
 	r.Token = response.Data.Token
-	return response.Data.Token, err
+	return err
 }
 
 type ReclaimAccountInfo struct {
@@ -71,14 +77,17 @@ type ReclaimAccountInfo struct {
 	} `json:"data"`
 }
 
-func (r *ReclaimAccount) Info() (string, error) {
+func (r *ReclaimAccount) Info() error {
 	response := ReclaimAccountInfo{}
 	err := http_client.Get(fmt.Sprintf("%s/user/info", ReclaimApi), r.Token, nil, &response)
 	if err != nil {
-		return "", err
+		return err
+	}
+	if response.Code != 0 && response.Code != 200 {
+		return fmt.Errorf("获取用户信息失败: %s", response.Msg)
 	}
 	r.ReclaimInfo = &response
-	return response.Data.NickName, err
+	return nil
 }
 
 type HxReq struct {
@@ -105,10 +114,22 @@ func (r *ReclaimAccount) Transfer(account string) error {
 		fmt.Println("余额转换错误:", err)
 		return errors.New("余额转换错误")
 	}
+	if f < 100 {
+		fmt.Println("核销余额不足，跳过转账")
+		return nil
+	}
 	req := TransferToShopUserRequest{
 		ShopUserAccount: account,
 		Amount:          f,
 		Password:        r.PassWord,
 	}
-	return http_client.Post(fmt.Sprintf(TransferURL, ReclaimApi), r.Token, req, nil)
+	var response BaseResponse
+	err = http_client.Post(fmt.Sprintf(TransferURL, ReclaimApi), r.Token, req, &response)
+	if err != nil {
+		return err
+	}
+	if response.Code != 0 && response.Code != 200 {
+		return fmt.Errorf("转账失败: %s", response.Msg)
+	}
+	return nil
 }

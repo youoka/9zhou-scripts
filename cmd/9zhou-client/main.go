@@ -2,12 +2,10 @@ package main
 
 import (
 	"9zhou-scripts/client"
+	"9zhou-scripts/internal"
 	"9zhou-scripts/pkg/config"
 	"9zhou-scripts/pkg/utils"
 	"fmt"
-	"math"
-	"strconv"
-	"time"
 )
 
 func main() {
@@ -22,61 +20,23 @@ func main() {
 		return
 	}
 	fmt.Println("授权码有效")
-	shopCredentials := []string{cfg.ShopAccount, cfg.ShopPassword}
-	reclaimCredentials := []string{cfg.ReclaimAccount, cfg.ReclaimPassword}
-
-	account := client.NewShopAccount(shopCredentials[0], shopCredentials[1])
-	reclaim := client.NewReclaimAccount(reclaimCredentials[0], reclaimCredentials[1])
-	reclaim.Login()
-	account.Login()
-	reclaim.Info()
-	for {
-		order, err := account.GetHXOrder()
-		if err != nil {
-			return
-		}
-		reclaim.Hx(order)
-		if len(order) < 100 {
-			break
-		}
-	}
-	reclaim.Transfer(shopCredentials[0])
-	name, err := account.Info()
+	shop := client.NewShopAccount(cfg.ShopAccount, cfg.ShopPassword)
+	reclaim := client.NewReclaimAccount(cfg.ReclaimAccount, cfg.ReclaimPassword)
+	service := internal.NewService(shop, reclaim)
+	err = service.Login()
 	if err != nil {
+		fmt.Println("登录失败:", err.Error())
 		return
 	}
-	go func() {
-		for {
-			time.Sleep(time.Second * 3600)
-			account.Login()
-			reclaim.Login()
-		}
-	}()
-	fmt.Println(name)
-	f, err := strconv.ParseFloat(account.UserInfo.Data.Wallet.Balance, 64)
+	service.Hx()
+	err = service.Transfer()
 	if err != nil {
-		fmt.Println("余额转换错误:", err)
+		fmt.Println("转账失败:", err.Error())
 		return
 	}
-	if f < 1000 {
-		fmt.Println("余额不足")
+	err = service.Pay()
+	if err != nil {
+		fmt.Println("购买失败:", err.Error())
 		return
-	}
-	fmt.Println("余额:", f)
-	fmt.Println("开始下单")
-	count := math.Floor(f / 1000)
-	for i := 0; i < int(count); i++ {
-		time.Sleep(time.Second * 2)
-		orderId, err := account.CreateOrder(client.P1000)
-		if err != nil {
-			return
-		}
-		if orderId != "" {
-			msg, err := account.PayOrder(orderId)
-			fmt.Println(msg)
-			if err != nil {
-				return
-			}
-		}
 	}
 }
