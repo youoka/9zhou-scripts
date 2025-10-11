@@ -2,48 +2,28 @@ package main
 
 import (
 	"9zhou-scripts/client"
-	"bufio"
+	"9zhou-scripts/pkg/config"
+	"9zhou-scripts/pkg/utils"
 	"fmt"
 	"math"
-	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
 func main() {
-	// 从文件读取账户信息
-	file, err := os.Open("9zhou.txt")
+	// 从key.yaml或用户输入读取账户信息
+	cfg, err := config.LoadConfig()
 	if err != nil {
-		fmt.Println("无法打开配置文件:", err)
+		fmt.Println("无法加载配置:", err)
 		return
 	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	lines := make([]string, 0)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-
-	if len(lines) < 2 {
-		fmt.Println("配置文件格式不正确，至少需要两行")
+	if !utils.CheckIsValid(cfg.AuthKey, cfg.ShopAccount, cfg.ReclaimAccount) {
+		fmt.Println("授权码无效")
 		return
 	}
-
-	// 第一行为shop账号和密码
-	shopCredentials := strings.Split(lines[0], " ")
-	if len(shopCredentials) != 2 {
-		fmt.Println("商城账号配置格式不正确，应为'账号 密码'")
-		return
-	}
-
-	// 第二行为reclaim账号和密码
-	reclaimCredentials := strings.Split(lines[1], " ")
-	if len(reclaimCredentials) != 2 {
-		fmt.Println("核销账号配置格式不正确，应为'账号 密码'")
-		return
-	}
+	fmt.Println("授权码有效")
+	shopCredentials := []string{cfg.ShopAccount, cfg.ShopPassword}
+	reclaimCredentials := []string{cfg.ReclaimAccount, cfg.ReclaimPassword}
 
 	account := client.NewShopAccount(shopCredentials[0], shopCredentials[1])
 	reclaim := client.NewReclaimAccount(reclaimCredentials[0], reclaimCredentials[1])
