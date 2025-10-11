@@ -17,6 +17,20 @@ type Service struct {
 func NewService(shop *client.ShopAccount, reclaim *client.ReclaimAccount) *Service {
 	return &Service{shop: shop, reclaim: reclaim}
 }
+
+func (s *Service) StartAuto2Task() {
+	go func() {
+		ticker := time.NewTicker(3 * time.Minute)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				s.Login()
+			}
+		}
+	}()
+}
 func (s *Service) Login() error {
 	err := s.shop.Login()
 	if err != nil {

@@ -28,6 +28,9 @@ func main() {
 		fmt.Println("登录失败:", err.Error())
 		return
 	}
+	go func() {
+		service.StartAuto2Task()
+	}()
 	service.Hx()
 	err = service.Transfer()
 	if err != nil {
