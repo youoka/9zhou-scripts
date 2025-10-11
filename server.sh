@@ -9,7 +9,7 @@ EXECUTABLE="./bin/server"
 # PID 文件路径
 PID_FILE="./server.pid"
 # 端口
-PORT=8080
+PORT=9080
 
 # 构建应用
 build() {

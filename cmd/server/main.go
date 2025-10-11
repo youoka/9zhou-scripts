@@ -47,7 +47,7 @@ func main() {
 	})
 
 	// 启动服务器
-	router.Run(":8080")
+	router.Run(":9080")
 }
 
 // generateKeyHandler 处理生成密钥的请求
