@@ -163,7 +163,7 @@
         // 设置默认日期为今天之后的一年
         window.onload = function() {
             const today = new Date();
-            const oneYearLater = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+            const oneYearLater = new Date(today.getFullYear(), today.getMonth()+1, today.getDate());
             const formattedDate = oneYearLater.toISOString().split('T')[0];
             document.getElementById('expiryDate').value = formattedDate;
         };
