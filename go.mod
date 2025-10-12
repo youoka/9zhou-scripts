@@ -4,6 +4,7 @@ go 1.24
 
 require (
 	github.com/YuanJey/goutils2 v1.0.6
+	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/gin-gonic/gin v1.11.0
 	gopkg.in/yaml.v2 v2.4.0
 )

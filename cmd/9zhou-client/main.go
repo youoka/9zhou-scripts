@@ -6,6 +6,7 @@ import (
 	"9zhou-scripts/pkg/config"
 	"9zhou-scripts/pkg/utils"
 	"fmt"
+	"github.com/eiannone/keyboard"
 )
 
 func main() {
@@ -42,4 +43,14 @@ func main() {
 		fmt.Println("购买失败:", err.Error())
 		return
 	}
+
+	// 添加任意键退出功能
+	fmt.Println("按任意键退出...")
+	if err := keyboard.Open(); err != nil {
+		panic(err)
+	}
+	defer keyboard.Close()
+
+	_, _, _ = keyboard.GetKey()
+	fmt.Println("程序已退出")
 }
