@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>九洲配置管理系统</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    .header {
+      background-color: #007bff;
+      color: white;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    .nav {
+      background-color: #343a40;
+      padding: 0;
+    }
+    .nav ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+    .nav li {
+      flex: 1;
+    }
+    .nav a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 1rem;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+    .nav a:hover {
+      background-color: #495057;
+    }
+    .nav a.active {
+      background-color: #007bff;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    .tab-content {
+      display: none;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .tab-content.active {
+      display: block;
+    }
+    h2 {
+      color: #333;
+      margin-top: 0;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+    }
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    .full-width {
+      grid-column: span 2;
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .stat-card {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      background-color: #f9f9f9;
+    }
+    .response {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .account-list {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+    }
+    .account-item {
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .account-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>九洲配置管理系统</h1>
+  </div>
+  
+  <nav class="nav">
+    <ul>
+      <li><a href="#" class="tab-link active" data-tab="config">配置管理</a></li>
+      <li><a href="#" class="tab-link" data-tab="shop-account">商店账号</a></li>
+      <li><a href="#" class="tab-link" data-tab="hx-account">核销账号</a></li>
+      <li><a href="#" class="tab-link" data-tab="order-stats">订单统计</a></li>
+    </ul>
+  </nav>
+  
+  <div class="container">
+    <!-- 配置管理部分 -->
+    <div id="config" class="tab-content active">
+      <h2>配置管理</h2>
+      <form id="configForm">
+        <input type="hidden" id="configType" value="1">
+        
+        <div>
+          <label for="num1000">1000面额数量:</label>
+          <input type="number" id="num1000" required>
+        </div>
+        
+        <div>
+          <label for="num500">500面额数量:</label>
+          <input type="number" id="num500" required>
+        </div>
+        
+        <div>
+          <label for="num200">200面额数量:</label>
+          <input type="number" id="num200" required>
+        </div>
+        
+        <div>
+          <label for="num100">100面额数量:</label>
+          <input type="number" id="num100" required>
+        </div>
+        
+        <div class="full-width">
+          <label for="configDate">配置日期:</label>
+          <input type="date" id="configDate" required>
+        </div>
+        
+        <div class="full-width">
+          <button type="submit">更新配置</button>
+        </div>
+      </form>
+      
+      <div id="configResponse" class="response" style="display: none;"></div>
+    </div>
+    
+    <!-- 商店账号管理部分 -->
+    <div id="shop-account" class="tab-content">
+      <h2>商店账号管理</h2>
+      <form id="shopAccountForm">
+        <div>
+          <label for="shopAccount">账号:</label>
+          <input type="text" id="shopAccount" required>
+        </div>
+        
+        <div>
+          <label for="shopPassword">密码:</label>
+          <input type="password" id="shopPassword" required>
+        </div>
+        
+        <div class="full-width">
+          <button type="submit">添加商店账号</button>
+        </div>
+      </form>
+      
+      <div id="shopAccountResponse" class="response" style="display: none;"></div>
+      
+      <div>
+        <h3>现有商店账号</h3>
+        <button id="loadShopAccountsBtn">加载商店账号</button>
+        <div id="shopAccountsList" class="account-list"></div>
+      </div>
+    </div>
+    
+    <!-- 核销账号管理部分 -->
+    <div id="hx-account" class="tab-content">
+      <h2>核销账号管理</h2>
+      <form id="hxAccountForm">
+        <div>
+          <label for="hxAccount">账号:</label>
+          <input type="text" id="hxAccount" required>
+        </div>
+        
+        <div>
+          <label for="hxPassword">密码:</label>
+          <input type="password" id="hxPassword" required>
+        </div>
+        
+        <div>
+          <label for="hxKey">Key:</label>
+          <input type="text" id="hxKey" required>
+        </div>
+        
+        <div class="full-width">
+          <button type="submit">更新核销账号</button>
+        </div>
+      </form>
+      
+      <div id="hxAccountResponse" class="response" style="display: none;"></div>
+      
+      <div>
+        <h3>当前核销账号</h3>
+        <button id="loadHxAccountBtn">加载核销账号</button>
+        <div id="hxAccountInfo" class="account-list"></div>
+      </div>
+    </div>
+    
+    <!-- 订单统计部分 -->
+    <div id="order-stats" class="tab-content">
+      <h2>订单统计查询</h2>
+      <div>
+        <label for="queryDate">查询日期:</label>
+        <input type="date" id="queryDate" required>
+        <button id="queryStatsBtn">查询统计</button>
+      </div>
+      
+      <div id="statsResult" class="stats-grid" style="display: none;"></div>
+      <div id="statsResponse" class="response" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    // 设置默认日期为今天
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('configDate').value = today;
+      document.getElementById('queryDate').value = today;
+      
+      // 加载当前配置
+      loadCurrentConfig();
+      
+      // 设置导航标签切换
+      setupTabNavigation();
+    });
+    
+    // 设置导航标签切换
+    function setupTabNavigation() {
+      const tabLinks = document.querySelectorAll('.tab-link');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      tabLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // 移除所有活动状态
+          tabLinks.forEach(l => l.classList.remove('active'));
+          tabContents.forEach(c => c.classList.remove('active'));
+          
+          // 添加活动状态到当前标签
+          this.classList.add('active');
+          
+          // 显示对应的内容
+          const tabId = this.getAttribute('data-tab');
+          document.getElementById(tabId).classList.add('active');
+        });
+      });
+    }
+    
+    // 加载当前配置
+    function loadCurrentConfig() {
+      fetch('/config')
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.type) {
+            document.getElementById('num1000').value = data.num1000 || 0;
+            document.getElementById('num500').value = data.num500 || 0;
+            document.getElementById('num200').value = data.num200 || 0;
+            document.getElementById('num100').value = data.num100 || 0;
+            document.getElementById('configDate').value = data.date || '';
+          }
+        })
+        .catch(error => {
+          console.error('加载配置失败:', error);
+        });
+    }
+    
+    // 配置表单提交
+    document.getElementById('configForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const configData = {
+        type: parseInt(document.getElementById('configType').value),
+        num1000: parseInt(document.getElementById('num1000').value),
+        num500: parseInt(document.getElementById('num500').value),
+        num200: parseInt(document.getElementById('num200').value),
+        num100: parseInt(document.getElementById('num100').value),
+        date: document.getElementById('configDate').value
+      };
+      
+      fetch('/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(configData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        showResponse('configResponse', '配置更新成功！', 'success');
+      })
+      .catch(error => {
+        showResponse('configResponse', '配置更新失败: ' + error.message, 'error');
+      });
+    });
+    
+    // 商店账号表单提交
+    document.getElementById('shopAccountForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const accountData = {
+        account: document.getElementById('shopAccount').value,
+        password: document.getElementById('shopPassword').value
+      };
+      
+      fetch('/shop-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(accountData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        showResponse('shopAccountResponse', '商店账号添加成功！', 'success');
+        document.getElementById('shopAccountForm').reset();
+      })
+      .catch(error => {
+        showResponse('shopAccountResponse', '商店账号添加失败: ' + error.message, 'error');
+      });
+    });
+    
+    // 加载商店账号
+    document.getElementById('loadShopAccountsBtn').addEventListener('click', function() {
+      fetch('/shop-account')
+        .then(response => response.json())
+        .then(data => {
+          displayShopAccounts(data);
+        })
+        .catch(error => {
+          showResponse('shopAccountResponse', '加载商店账号失败: ' + error.message, 'error');
+        });
+    });
+    
+    // 显示商店账号
+    function displayShopAccounts(accounts) {
+      const listDiv = document.getElementById('shopAccountsList');
+      if (accounts && accounts.length > 0) {
+        let html = '<h4>账号列表:</h4>';
+        accounts.forEach(account => {
+          html += `
+            <div class="account-item">
+              <div class="account-details">
+                <div><strong>账号:</strong> ${account.account}</div>
+                <div><strong>密码:</strong> ${account.password}</div>
+              </div>
+            </div>
+          `;
+        });
+        listDiv.innerHTML = html;
+      } else {
+        listDiv.innerHTML = '<p>暂无商店账号</p>';
+      }
+    }
+    
+    // 核销账号表单提交
+    document.getElementById('hxAccountForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const accountData = {
+        account: document.getElementById('hxAccount').value,
+        password: document.getElementById('hxPassword').value,
+        key: document.getElementById('hxKey').value
+      };
+      
+      fetch('/hx-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(accountData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        showResponse('hxAccountResponse', '核销账号更新成功！', 'success');
+        document.getElementById('hxAccountForm').reset();
+      })
+      .catch(error => {
+        showResponse('hxAccountResponse', '核销账号更新失败: ' + error.message, 'error');
+      });
+    });
+    
+    // 加载核销账号
+    document.getElementById('loadHxAccountBtn').addEventListener('click', function() {
+      fetch('/hx-account')
+        .then(response => response.json())
+        .then(data => {
+          displayHxAccount(data);
+          // 填充表单字段
+          if (data && data.account) {
+            document.getElementById('hxAccount').value = data.account || '';
+            document.getElementById('hxPassword').value = data.password || '';
+            document.getElementById('hxKey').value = data.key || '';
+          }
+        })
+        .catch(error => {
+          showResponse('hxAccountResponse', '加载核销账号失败: ' + error.message, 'error');
+        });
+    });
+    
+    // 显示核销账号
+    function displayHxAccount(account) {
+      const infoDiv = document.getElementById('hxAccountInfo');
+      if (account && account.account) {
+        infoDiv.innerHTML = `
+          <div class="account-item">
+            <div class="account-details">
+              <div><strong>账号:</strong> ${account.account}</div>
+              <div><strong>密码:</strong> ${account.password}</div>
+              <div><strong>Key:</strong> ${account.key}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        infoDiv.innerHTML = '<p>暂无核销账号</p>';
+      }
+    }
+    
+    // 查询统计数据
+    document.getElementById('queryStatsBtn').addEventListener('click', function() {
+      const date = document.getElementById('queryDate').value;
+      if (!date) {
+        alert('请选择查询日期');
+        return;
+      }
+      
+      fetch('/order-stats/' + date)
+        .then(response => response.json())
+        .then(data => {
+          displayStatsData(data);
+        })
+        .catch(error => {
+          showResponse('statsResponse', '查询统计数据失败: ' + error.message, 'error');
+        });
+    });
+    
+    // 显示响应消息
+    function showResponse(elementId, message, type) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.className = 'response ' + type;
+      element.style.display = 'block';
+      
+      // 3秒后自动隐藏
+      setTimeout(() => {
+        element.style.display = 'none';
+      }, 3000);
+    }
+    
+    // 显示统计数据
+    function displayStatsData(data) {
+      const resultDiv = document.getElementById('statsResult');
+      if (data && data.date) {
+        resultDiv.innerHTML = `
+          <div class="stat-card">
+            <h3>订单统计数据 - ${data.date}</h3>
+            <p><strong>失败订单:</strong> ${data.failed_count} 笔，￥${data.failed_amount}</p>
+            <p><strong>成功订单:</strong> ${data.succeed_count} 笔，￥${data.succeed_amount}</p>
+            <p><strong>采购订单:</strong> ${data.purchase_count} 笔，￥${data.purchase_amount}</p>
+          </div>
+        `;
+        resultDiv.style.display = 'grid';
+      } else {
+        resultDiv.innerHTML = '<p>未找到指定日期的统计数据</p>';
+        resultDiv.style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>

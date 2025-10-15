@@ -50,22 +50,10 @@ func (s *Service) Login() error {
 	}
 	return err
 }
-func (s *Service) Hx() {
-	for {
-		order, err := s.shop.GetHXOrder()
-		if err != nil {
-			return
-		}
-		err = s.reclaim.Hx(order)
-		if len(order) < 100 {
-			break
-		}
-	}
-}
 func (s *Service) Transfer() error {
 	return s.reclaim.Transfer(s.shop.Account)
 }
-func (s *Service) Pay() error {
+func (s *Service) Pay(num1000, num500, num200, num100 int) error {
 	f, err := strconv.ParseFloat(s.shop.UserInfo.Data.Wallet.Balance, 64)
 	if err != nil {
 		fmt.Println("余额转换错误:", err)

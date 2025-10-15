@@ -3,6 +3,7 @@ package client
 import (
 	"9zhou-scripts/pkg/http_client"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -11,7 +12,7 @@ const (
 	loginURL       = "%s/auth/login"
 	CreateOrderURL = "%s/order"
 	PayOrderURL    = "%s/order/%s/pay"
-	HxOrderURL     = "%s/order?page=1&page_size=100&status=3"
+	HxOrderURL     = "%s/order?page=%s&page_size=100&startTime=%s&endTime=%s&status=%s"
 )
 const (
 	P1000 = "68dea238d5e367848e140696"
@@ -215,18 +216,38 @@ type GetHXOrderResp struct {
 	TotalPage  int `json:"total_page"`
 }
 
-func (s *ShopAccount) GetHXOrder() ([]string, error) {
+func (s *ShopAccount) GetShippedOrder(startTime, endTime string, size int) (*GetHXOrderResp, error) {
 	resp := GetHXOrderResp{}
-	err := http_client.Get(fmt.Sprintf(HxOrderURL, ShopAddr), s.token, nil, &resp)
+	err := http_client.Get(fmt.Sprintf(HxOrderURL, ShopAddr, strconv.Itoa(size), startTime, endTime, "3"), s.token, nil, &resp)
 	if err != nil {
 		return nil, err
 	}
 	if resp.Code != 0 {
 		return nil, fmt.Errorf("获取订单失败: %s", resp.Msg)
 	}
-	response := make([]string, 0)
-	for _, v := range resp.Data {
-		response = append(response, v.Id)
+	return &resp, err
+}
+
+// 获取已支付的订单
+func (s *ShopAccount) GetPaidOrder(startTime, endTime string, size int) (*GetHXOrderResp, error) {
+	resp := GetHXOrderResp{}
+	err := http_client.Get(fmt.Sprintf(HxOrderURL, ShopAddr, strconv.Itoa(size), startTime, endTime, "2"), s.token, nil, &resp)
+	if err != nil {
+		return nil, err
 	}
-	return response, err
+	if resp.Code != 0 {
+		return nil, fmt.Errorf("获取订单失败: %s", resp.Msg)
+	}
+	return &resp, err
+}
+func (s *ShopAccount) GetCancelledOrder(startTime, endTime string, size int) (*GetHXOrderResp, error) {
+	resp := GetHXOrderResp{}
+	err := http_client.Get(fmt.Sprintf(HxOrderURL, ShopAddr, strconv.Itoa(size), startTime, endTime, "5"), s.token, nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Code != 0 {
+		return nil, fmt.Errorf("获取订单失败: %s", resp.Msg)
+	}
+	return &resp, err
 }
