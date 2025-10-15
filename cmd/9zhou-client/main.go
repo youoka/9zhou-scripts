@@ -115,11 +115,7 @@ func main() {
 		fmt.Println("转账失败:", err.Error())
 		return
 	}
-	err = service.Pay(config.Num1000, config.Num500, config.Num200, config.Num100)
-	if err != nil {
-		fmt.Println("购买失败:", err.Error())
-		return
-	}
+	service.StartPay(config.Num1000, config.Num500, config.Num200, config.Num100)
 	PurchaseAmount := 0.00
 	PurchaseCount := 0
 	p := 1
