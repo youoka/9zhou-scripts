@@ -2,7 +2,11 @@ package main
 
 import (
 	"9zhou-scripts/pkg/database"
+	"log"
 	"net/http"
+	"os/exec"
+	"runtime"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -68,6 +72,25 @@ func main() {
 	}
 
 	r.Run(":8080")
+	go func() {
+		time.Sleep(2 * time.Second) // 等待服务器启动
+		openBrowser1("http://127.0.0.1:8080")
+	}()
+}
+func openBrowser1(url string) {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", url)
+	case "darwin":
+		cmd = exec.Command("open", url)
+	default: // linux, freebsd, etc.
+		cmd = exec.Command("xdg-open", url)
+	}
+	err := cmd.Start()
+	if err != nil {
+		log.Printf("打开浏览器失败: %v", err)
+	}
 }
 
 // getConfig 获取配置信息
