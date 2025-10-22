@@ -111,12 +111,10 @@ type TransferToShopUserRequest struct {
 func (r *ReclaimAccount) Transfer(account string) error {
 	f, err := strconv.ParseFloat(r.ReclaimInfo.Data.Wallet.Balance, 64)
 	if err != nil {
-		fmt.Println("余额转换错误:", err)
 		return errors.New("余额转换错误")
 	}
 	if f < 100 {
-		fmt.Println("核销余额不足，跳过转账")
-		return nil
+		return errors.New("核销余额不足，跳过转账")
 	}
 	req := TransferToShopUserRequest{
 		ShopUserAccount: account,
@@ -131,5 +129,6 @@ func (r *ReclaimAccount) Transfer(account string) error {
 	if response.Code != 0 && response.Code != 200 {
 		return fmt.Errorf("转账失败: %s", response.Msg)
 	}
+	fmt.Println("转账成功", f)
 	return nil
 }
