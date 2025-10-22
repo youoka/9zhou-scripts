@@ -3,13 +3,11 @@ package main
 import (
 	"9zhou-scripts/internal/controller"
 	"9zhou-scripts/pkg/database"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"os/exec"
 	"runtime"
-	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 type ConfigRequest struct {
@@ -33,7 +31,7 @@ type HxAccountRequest struct {
 }
 
 func main() {
-	r := gin.Default()
+	r := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 	r.Use(gin.Recovery())
 	// 提供静态文件服务
@@ -79,12 +77,10 @@ func main() {
 		scriptsGroup.POST("/transfer", controller.Transfer)
 		scriptsGroup.POST("/pay", controller.Pay)
 	}
-
-	r.Run(":8080")
 	go func() {
-		time.Sleep(3 * time.Second) // 等待服务器启动
 		openBrowser1("http://127.0.0.1:8080")
 	}()
+	r.Run(":8080")
 }
 func openBrowser1(url string) {
 	var cmd *exec.Cmd
