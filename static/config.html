@@ -142,6 +142,100 @@
       gap: 10px;
       margin: 5px 0;
     }
+    .script-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .script-card {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      background-color: #f9f9f9;
+    }
+    .script-card h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    .script-card p {
+      color: #666;
+    }
+    /* 弹窗样式 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 500px;
+      border-radius: 5px;
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    }
+    .modal-header {
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 {
+      margin: 0;
+      color: #333;
+    }
+    .close {
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+    }
+    .modal-body {
+      padding: 15px 0;
+    }
+    .modal-footer {
+      padding: 10px 0;
+      border-top: 1px solid #eee;
+      text-align: right;
+    }
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #0056b3;
+    }
+    .data-content {
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .data-item {
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+    }
   </style>
 </head>
 <body>
@@ -155,6 +249,7 @@
       <li><a href="#" class="tab-link" data-tab="shop-account">商店账号</a></li>
       <li><a href="#" class="tab-link" data-tab="hx-account">核销账号</a></li>
       <li><a href="#" class="tab-link" data-tab="order-stats">订单统计</a></li>
+      <li><a href="#" class="tab-link" data-tab="scripts">脚本操作</a></li>
     </ul>
   </nav>
   
@@ -271,6 +366,61 @@
       <div id="statsResult" class="stats-grid" style="display: none;"></div>
       <div id="statsResponse" class="response" style="display: none;"></div>
     </div>
+    
+    <!-- 脚本操作部分 -->
+    <div id="scripts" class="tab-content">
+      <h2>脚本操作</h2>
+      <p>点击以下按钮执行相应的自动化脚本：</p>
+      
+      <div class="script-buttons">
+        <div class="script-card">
+          <h3>初始化脚本</h3>
+          <p>执行系统初始化操作</p>
+          <button id="initScriptBtn">执行初始化</button>
+        </div>
+        
+        <div class="script-card">
+          <h3>登录脚本</h3>
+          <p>执行商城和核销系统的登录操作</p>
+          <button id="loginScriptBtn">执行登录</button>
+        </div>
+        
+        <div class="script-card">
+          <h3>核销脚本</h3>
+          <p>根据配置获取订单并执行核销操作</p>
+          <button id="hxScriptBtn">执行核销</button>
+        </div>
+        
+        <div class="script-card">
+          <h3>转账脚本</h3>
+          <p>执行转账操作</p>
+          <button id="transferScriptBtn">执行转账</button>
+        </div>
+        
+        <div class="script-card">
+          <h3>支付脚本</h3>
+          <p>根据配置执行支付操作</p>
+          <button id="payScriptBtn">执行支付</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 -->
+  <div id="resultModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">执行结果</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p id="modalMessage"></p>
+        <div id="modalData" class="data-content" style="display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="modalCloseBtn">确定</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -285,6 +435,12 @@
       
       // 设置导航标签切换
       setupTabNavigation();
+      
+      // 设置脚本按钮事件
+      setupScriptButtons();
+      
+      // 设置弹窗事件
+      setupModal();
     });
     
     // 设置导航标签切换
@@ -307,6 +463,103 @@
           const tabId = this.getAttribute('data-tab');
           document.getElementById(tabId).classList.add('active');
         });
+      });
+    }
+    
+    // 设置弹窗事件
+    function setupModal() {
+      const modal = document.getElementById('resultModal');
+      const span = document.getElementsByClassName('close')[0];
+      const closeBtn = document.getElementById('modalCloseBtn');
+      
+      // 关闭弹窗
+      span.onclick = function() {
+        modal.style.display = 'none';
+      }
+      
+      closeBtn.onclick = function() {
+        modal.style.display = 'none';
+      }
+      
+      // 点击弹窗外部关闭
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = 'none';
+        }
+      }
+    }
+    
+    // 显示弹窗
+    function showModal(title, message, data = null) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalMessage').textContent = message;
+      
+      const dataContent = document.getElementById('modalData');
+      if (data) {
+        dataContent.style.display = 'block';
+        let dataHtml = '';
+        if (typeof data === 'object') {
+          for (const key in data) {
+            if (data.hasOwnProperty(key)) {
+              dataHtml += `<div class="data-item"><strong>${key}:</strong> ${data[key]}</div>`;
+            }
+          }
+        } else {
+          dataHtml = data;
+        }
+        dataContent.innerHTML = dataHtml;
+      } else {
+        dataContent.style.display = 'none';
+      }
+      
+      document.getElementById('resultModal').style.display = 'block';
+    }
+    
+    // 设置脚本按钮事件
+    function setupScriptButtons() {
+      document.getElementById('initScriptBtn').addEventListener('click', function() {
+        executeScript('/scripts/init', '初始化');
+      });
+      
+      document.getElementById('loginScriptBtn').addEventListener('click', function() {
+        executeScript('/scripts/login', '登录');
+      });
+      
+      document.getElementById('hxScriptBtn').addEventListener('click', function() {
+        executeScript('/scripts/hx', '核销');
+      });
+      
+      document.getElementById('transferScriptBtn').addEventListener('click', function() {
+        executeScript('/scripts/transfer', '转账');
+      });
+      
+      document.getElementById('payScriptBtn').addEventListener('click', function() {
+        executeScript('/scripts/pay', '支付');
+      });
+    }
+    
+    // 执行脚本
+    function executeScript(url, actionName) {
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message === '成功' || data.message === '登录成功' || data.message === '初始化成功') {
+          if (data.data) {
+            showModal(`${actionName}执行成功`, data.message, data.data);
+          } else {
+            showModal(`${actionName}执行成功`, data.message);
+          }
+        } else {
+          showModal(`${actionName}执行失败`, data.message);
+        }
+      })
+      .catch(error => {
+        showModal(`${actionName}执行失败`, error.message);
       });
     }
     

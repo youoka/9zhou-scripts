@@ -131,5 +131,6 @@ func (r *ReclaimAccount) Transfer(account string) error {
 	if response.Code != 0 && response.Code != 200 {
 		return fmt.Errorf("转账失败: %s", response.Msg)
 	}
+	fmt.Println("转账成功", f)
 	return nil
 }

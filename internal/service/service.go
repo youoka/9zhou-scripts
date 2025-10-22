@@ -1,20 +1,48 @@
-package internal
+package service
 
 import (
 	"9zhou-scripts/client"
+	"9zhou-scripts/pkg/database"
+	"9zhou-scripts/pkg/utils"
 	"errors"
 	"fmt"
 	"strconv"
 	"time"
 )
 
+var ZhouService *Service
+
+func Init() {
+	hxAccount, err := database.Db.GetHxAccount()
+	if err != nil {
+		fmt.Println("无法获取核销账号信息")
+		return
+	}
+
+	// 获取商店账号信息（获取第一个商店账号）
+	shopAccounts, err := database.Db.GetAllShopAccount()
+	if err != nil || len(shopAccounts) == 0 {
+		fmt.Println("无法获取商城账号信息")
+		return
+	}
+	shopAccount := shopAccounts[0]
+	// 授权码验证
+	if !utils.CheckIsValid(hxAccount.Key, shopAccount.Account, hxAccount.Account) {
+		fmt.Println("授权码无效")
+		return
+	}
+	shop := client.NewShopAccount(shopAccount.Account, shopAccount.Password)
+	reclaim := client.NewReclaimAccount(hxAccount.Account, hxAccount.Password)
+	ZhouService = NewService(shop, reclaim)
+}
+
 type Service struct {
-	shop    *client.ShopAccount
-	reclaim *client.ReclaimAccount
+	Shop    *client.ShopAccount
+	Reclaim *client.ReclaimAccount
 }
 
 func NewService(shop *client.ShopAccount, reclaim *client.ReclaimAccount) *Service {
-	return &Service{shop: shop, reclaim: reclaim}
+	return &Service{Shop: shop, Reclaim: reclaim}
 }
 
 func (s *Service) StartAuto2Task() {
@@ -31,30 +59,30 @@ func (s *Service) StartAuto2Task() {
 	}()
 }
 func (s *Service) Login() error {
-	err := s.shop.Login()
+	err := s.Shop.Login()
 	if err != nil {
 		return err
 	}
-	err = s.shop.Info()
+	err = s.Shop.Info()
 	if err != nil {
 		return err
 	}
-	err = s.reclaim.Login()
+	err = s.Reclaim.Login()
 	if err != nil {
 		return err
 	}
-	err = s.reclaim.Info()
+	err = s.Reclaim.Info()
 	if err != nil {
 		return err
 	}
 	return err
 }
 func (s *Service) Transfer() error {
-	return s.reclaim.Transfer(s.shop.Account)
+	return s.Reclaim.Transfer(s.Shop.Account)
 }
 func (s *Service) Pay(p int, num int) error {
-	s.shop.Info()
-	balance, err := strconv.ParseFloat(s.shop.UserInfo.Data.Wallet.Balance, 64)
+	s.Shop.Info()
+	balance, err := strconv.ParseFloat(s.Shop.UserInfo.Data.Wallet.Balance, 64)
 	if err != nil {
 		fmt.Println("余额转换错误:", err)
 		return err
@@ -78,12 +106,12 @@ func (s *Service) Pay(p int, num int) error {
 	}
 	for i := range num {
 		time.Sleep(time.Second * 2)
-		orderId, err := s.shop.CreateOrder(goods)
+		orderId, err := s.Shop.CreateOrder(goods)
 		if err != nil {
 			return err
 		}
 		if orderId != "" {
-			msg, err := s.shop.PayOrder(orderId)
+			msg, err := s.Shop.PayOrder(orderId)
 			fmt.Println(msg)
 			if err != nil {
 				return err
@@ -101,7 +129,7 @@ func (s *Service) StartPay(num1000, num500, num200, num100 int) {
 }
 
 //func (s *Service) Pay(num1000, num500, num200, num100 int) error {
-//	f, err := strconv.ParseFloat(s.shop.UserInfo.Data.Wallet.Balance, 64)
+//	f, err := strconv.ParseFloat(s.Shop.UserInfo.Data.Wallet.Balance, 64)
 //	if err != nil {
 //		fmt.Println("余额转换错误:", err)
 //		return err
@@ -115,12 +143,12 @@ func (s *Service) StartPay(num1000, num500, num200, num100 int) {
 //	count := math.Floor(f / 1000)
 //	for i := 0; i < int(count); i++ {
 //		time.Sleep(time.Second * 2)
-//		orderId, err := s.shop.CreateOrder(client.P1000)
+//		orderId, err := s.Shop.CreateOrder(client.P1000)
 //		if err != nil {
 //			return err
 //		}
 //		if orderId != "" {
-//			msg, err := s.shop.PayOrder(orderId)
+//			msg, err := s.Shop.PayOrder(orderId)
 //			fmt.Println(msg)
 //			if err != nil {
 //				return err

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"9zhou-scripts/internal/controller"
 	"9zhou-scripts/pkg/database"
 	"log"
 	"net/http"
@@ -70,10 +71,18 @@ func main() {
 		hxAccountGroup.GET("", getHxAccount)
 		hxAccountGroup.POST("", updateHxAccount)
 	}
+	scriptsGroup := r.Group("/scripts")
+	{
+		scriptsGroup.POST("/init", controller.Init)
+		scriptsGroup.POST("/login", controller.Login)
+		scriptsGroup.POST("/hx", controller.Hx)
+		scriptsGroup.POST("/transfer", controller.Transfer)
+		scriptsGroup.POST("/pay", controller.Pay)
+	}
 
 	r.Run(":8080")
 	go func() {
-		time.Sleep(2 * time.Second) // 等待服务器启动
+		time.Sleep(3 * time.Second) // 等待服务器启动
 		openBrowser1("http://127.0.0.1:8080")
 	}()
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"9zhou-scripts/client"
-	"9zhou-scripts/internal"
+	"9zhou-scripts/internal/service"
 	"9zhou-scripts/pkg/database"
 	"9zhou-scripts/pkg/utils"
 	"fmt"
@@ -42,13 +42,6 @@ func main() {
 
 	// 结束时间是开始时间的第二天
 	endTime := startTime.AddDate(0, 0, 1)
-
-	// 检查当前时间是否在有效范围内
-	//currentTime := time.Now()
-	//if !(currentTime.After(startTime) && currentTime.Before(endTime)) {
-	//	fmt.Printf("当前时间不在有效范围内，有效范围: %s 至 %s\n", startTime.Format("2006-01-02"), endTime.Format("2006-01-02"))
-	//	return
-	//}
 	shopAccount := shopAccounts[0]
 
 	// 授权码验证
@@ -60,7 +53,7 @@ func main() {
 
 	shop := client.NewShopAccount(shopAccount.Account, shopAccount.Password)
 	reclaim := client.NewReclaimAccount(hxAccount.Account, hxAccount.Password)
-	service := internal.NewService(shop, reclaim)
+	service := service.NewService(shop, reclaim)
 	err = service.Login()
 	if err != nil {
 		fmt.Println("登录失败:", err.Error())
