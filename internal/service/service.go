@@ -105,7 +105,7 @@ func (s *Service) Pay(p int, num int) error {
 		return errors.New("商品不存在")
 	}
 	for i := range num {
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * 1)
 		orderId, err := s.Shop.CreateOrder(goods)
 		if err != nil {
 			return err

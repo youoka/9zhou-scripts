@@ -3,11 +3,14 @@ package main
 import (
 	"9zhou-scripts/internal/controller"
 	"9zhou-scripts/pkg/database"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"os/exec"
 	"runtime"
+	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 type ConfigRequest struct {
@@ -31,9 +34,20 @@ type HxAccountRequest struct {
 }
 
 func main() {
-	r := gin.New()
+	r := gin.Default()
 	gin.SetMode(gin.ReleaseMode)
 	r.Use(gin.Recovery())
+
+	// 使用gin-contrib/cors中间件解决跨域问题
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "token", "x-trace-id"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+		AllowAllOrigins:  true,
+	}))
+
 	// 提供静态文件服务
 	r.Static("/static", "./static")
 	r.LoadHTMLFiles("./static/config.html")
@@ -77,10 +91,12 @@ func main() {
 		scriptsGroup.POST("/transfer", controller.Transfer)
 		scriptsGroup.POST("/pay", controller.Pay)
 	}
+
+	r.Run(":8080")
 	go func() {
+		time.Sleep(3 * time.Second) // 等待服务器启动
 		openBrowser1("http://127.0.0.1:8080")
 	}()
-	r.Run(":8080")
 }
 func openBrowser1(url string) {
 	var cmd *exec.Cmd
