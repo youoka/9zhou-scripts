@@ -130,8 +130,9 @@ func Transfer(ctx *gin.Context) {
 	if err != nil {
 		fmt.Println("转账失败:", err.Error())
 		ctx.JSON(500, gin.H{
-			"message": "转账失败",
+			"message": err.Error(),
 		})
+		return
 	}
 	ctx.JSON(200, gin.H{
 		"message": "成功",
