@@ -39,8 +39,8 @@ func main() {
 	r.Use(gin.Recovery())
 
 	// 使用gin-contrib/cors中间件解决跨域问题
+	// 使用gin-contrib/cors中间件解决跨域问题
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "token", "x-trace-id"},
 		AllowCredentials: false,
