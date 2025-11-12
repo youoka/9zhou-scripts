@@ -6,8 +6,9 @@ import (
 	"9zhou-scripts/pkg/database"
 	"9zhou-scripts/pkg/utils"
 	"fmt"
-	"github.com/eiannone/keyboard"
 	"time"
+
+	"github.com/eiannone/keyboard"
 )
 
 func main() {
@@ -25,32 +26,37 @@ func main() {
 		fmt.Println("无法获取商店账号信息:", err)
 		return
 	}
-
+	shopAccount := shopAccounts[0]
 	// 获取配置信息
 	config, err := database.Db.GetConfig()
 	if err != nil {
 		fmt.Println("无法获取配置信息:", err)
 		return
 	}
-
+	statistics, err := database.Db.GetOrderStatistics(time.Now().Format("2006-01-02"))
+	if err != nil {
+		fmt.Println("无法获取订单统计信息:", err)
+	} else {
+		fmt.Println("订单统计信息:", statistics)
+		config.Num1000 = config.Num1000 - statistics.Num1000
+		config.Num500 = config.Num500 - statistics.Num500
+		config.Num200 = config.Num200 - statistics.Num200
+		config.Num100 = config.Num100 - statistics.Num100
+	}
 	// 解析配置中的日期作为开始时间
 	startTime, err := time.Parse("2006-01-02", config.Date)
 	if err != nil {
 		fmt.Println("时间格式错误:", err)
 		return
 	}
-
 	// 结束时间是开始时间的第二天
 	endTime := startTime.AddDate(0, 0, 1)
-	shopAccount := shopAccounts[0]
-
+	fmt.Println("授权码有效")
 	// 授权码验证
 	if !utils.CheckIsValid(hxAccount.Key, shopAccount.Account, hxAccount.Account) {
 		fmt.Println("授权码无效")
 		return
 	}
-	fmt.Println("授权码有效")
-
 	shop := client.NewShopAccount(shopAccount.Account, shopAccount.Password)
 	reclaim := client.NewReclaimAccount(hxAccount.Account, hxAccount.Password)
 	service := service.NewService(shop, reclaim)
@@ -59,81 +65,73 @@ func main() {
 		fmt.Println("登录失败:", err.Error())
 		return
 	}
-	go func() {
-		service.StartAuto2Task()
-	}()
-	cancelledAmount := 0.00
-	cancelledCount := 0
-	c := 1
+	i2 := 1
 	for {
-		cancelledOrder, err := shop.GetCancelledOrder(startTime.Format("2006-01-02"), endTime.Format("2006-01-02"), c)
-		if err != nil {
-			fmt.Println("获取取消订单失败:", err.Error())
-			return
-		}
-		cancelledAmount += utils.SumAmount(cancelledOrder)
-		cancelledCount += len(cancelledOrder.Data)
-		if len(cancelledOrder.Data) < 100 {
-			break
-		}
-	}
-	hxOrder := make([]string, 0)
-	ShippedAmount := 0.00
-	ShippedCount := 0
-	i := 1
-	for {
-		shippedOrder, err := shop.GetShippedOrder(startTime.Format("2006-01-02"), endTime.Format("2006-01-02"), i)
+		hxOrder := make([]string, 0)
+		shippedOrder, err := shop.GetShippedOrder(startTime.Format("2006-01-02"), endTime.Format("2006-01-02"), i2)
 		if err != nil {
 			fmt.Println("获取发货订单失败:", err.Error())
 			return
 		}
-		ShippedAmount += utils.SumAmount(shippedOrder)
-		ShippedCount += len(shippedOrder.Data)
 		for _, v := range shippedOrder.Data {
 			hxOrder = append(hxOrder, v.Id)
 		}
-		i++
+		err = reclaim.Hx(hxOrder)
+		if err != nil {
+			fmt.Println("核销失败:", err.Error())
+			continue
+		}
+		i2++
 		if len(hxOrder) < 100 {
 			break
 		}
 	}
-	err = reclaim.Hx(hxOrder)
-	if err != nil {
-		fmt.Println("核销失败:", err.Error())
-		return
-	}
-	//service.Hx(startTime.Format("2006-01-02"), endTime.Format("2006-01-02"))
 	err = service.Transfer()
 	if err != nil {
-		fmt.Println("转账失败:", err.Error())
-		return
+		fmt.Println("转账失败 跳过:", err.Error())
 	}
 	service.StartPay(config.Num1000, config.Num500, config.Num200, config.Num100)
-	PurchaseAmount := 0.00
-	PurchaseCount := 0
 	p := 1
+	Num1000ed := 0
+	Num500ed := 0
+	Num200ed := 0
+	Num100ed := 0
 	for {
 		paidOrder, err := shop.GetPaidOrder(time.Now().Format("2006-01-02"), time.Now().Add(time.Hour*24).Format("2006-01-02"), p)
 		if err != nil {
 			fmt.Println("获取支付订单失败:", err.Error())
 			return
 		}
-		PurchaseAmount += utils.SumAmount(paidOrder)
+		for _, v := range paidOrder.Data {
+			switch v.Products[0].Price {
+			case 1000:
+				Num1000ed++
+			case 500:
+				Num500ed++
+			case 200:
+				Num200ed++
+			case 100:
+				Num100ed++
+			}
+		}
 		p++
-		PurchaseCount += len(paidOrder.Data)
 		if len(paidOrder.Data) < 100 {
 			break
 		}
 	}
-	database.Db.CreateOrderStatistics(&database.OrderStatistics{
-		Date:           time.Now().Format("2006-01-02"),
-		FailedCount:    cancelledCount,
-		FailedAmount:   cancelledAmount,
-		SucceedCount:   ShippedCount,
-		SucceedAmount:  ShippedAmount,
-		PurchaseCount:  PurchaseCount,
-		PurchaseAmount: PurchaseAmount,
+	err = database.Db.SaveOrderStatistics(&database.OrderStatistics{
+		Date:        time.Now().Format("2006-01-02"),
+		Account:     shopAccount.Account,
+		Num1000:     Num1000ed,
+		Num500:      Num500ed,
+		Num200:      Num200ed,
+		Num100:      Num100ed,
+		TotalAmount: float64(Num1000ed*1000 + Num500ed*500 + Num200ed*200 + Num100ed*100),
 	})
+	if err != nil {
+		fmt.Println("保存订单统计失败:", err.Error())
+		return
+	}
 	// 添加任意键退出功能
 	fmt.Println("按任意键退出...")
 	if err := keyboard.Open(); err != nil {

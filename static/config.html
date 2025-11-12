@@ -249,7 +249,6 @@
       <li><a href="#" class="tab-link" data-tab="shop-account">商店账号</a></li>
       <li><a href="#" class="tab-link" data-tab="hx-account">核销账号</a></li>
       <li><a href="#" class="tab-link" data-tab="order-stats">订单统计</a></li>
-      <li><a href="#" class="tab-link" data-tab="scripts">脚本操作</a></li>
     </ul>
   </nav>
   
@@ -366,63 +365,7 @@
       <div id="statsResult" class="stats-grid" style="display: none;"></div>
       <div id="statsResponse" class="response" style="display: none;"></div>
     </div>
-    
-    <!-- 脚本操作部分 -->
-    <div id="scripts" class="tab-content">
-      <h2>脚本操作</h2>
-      <p>点击以下按钮执行相应的自动化脚本：</p>
-      
-      <div class="script-buttons">
-        <div class="script-card">
-          <h3>初始化脚本</h3>
-          <p>执行系统初始化操作</p>
-          <button id="initScriptBtn">执行初始化</button>
-        </div>
-        
-        <div class="script-card">
-          <h3>登录脚本</h3>
-          <p>执行商城和核销系统的登录操作</p>
-          <button id="loginScriptBtn">执行登录</button>
-        </div>
-        
-        <div class="script-card">
-          <h3>核销脚本</h3>
-          <p>根据配置获取订单并执行核销操作</p>
-          <button id="hxScriptBtn">执行核销</button>
-        </div>
-        
-        <div class="script-card">
-          <h3>转账脚本</h3>
-          <p>执行转账操作</p>
-          <button id="transferScriptBtn">执行转账</button>
-        </div>
-        
-        <div class="script-card">
-          <h3>支付脚本</h3>
-          <p>根据配置执行支付操作</p>
-          <button id="payScriptBtn">执行支付</button>
-        </div>
-      </div>
-    </div>
   </div>
-
-  <!-- 弹窗 -->
-  <div id="resultModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 id="modalTitle">执行结果</h3>
-        <span class="close">&times;</span>
-      </div>
-      <div class="modal-body">
-        <p id="modalMessage"></p>
-        <div id="modalData" class="data-content" style="display: none;"></div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" id="modalCloseBtn">确定</button>
-      </div>
-    </div>
-  </div>
-
   <script>
     // 设置默认日期为今天
     document.addEventListener('DOMContentLoaded', function() {
@@ -435,9 +378,6 @@
       
       // 设置导航标签切换
       setupTabNavigation();
-      
-      // 设置脚本按钮事件
-      setupScriptButtons();
       
       // 设置弹窗事件
       setupModal();
@@ -515,77 +455,6 @@
       document.getElementById('resultModal').style.display = 'block';
     }
     
-    // 设置脚本按钮事件
-    function setupScriptButtons() {
-      document.getElementById('initScriptBtn').addEventListener('click', function() {
-        executeScript('/scripts/init', '初始化');
-      });
-      
-      document.getElementById('loginScriptBtn').addEventListener('click', function() {
-        executeScript('/scripts/login', '登录');
-      });
-      
-      document.getElementById('hxScriptBtn').addEventListener('click', function() {
-        executeScript('/scripts/hx', '核销');
-      });
-      
-      document.getElementById('transferScriptBtn').addEventListener('click', function() {
-        executeScript('/scripts/transfer', '转账');
-      });
-      
-      document.getElementById('payScriptBtn').addEventListener('click', function() {
-        executeScript('/scripts/pay', '支付');
-      });
-    }
-    
-    // 执行脚本
-    function executeScript(url, actionName) {
-      // 获取对应的按钮元素
-      let button;
-      switch(actionName) {
-        case '支付':
-          button = document.getElementById('payScriptBtn');
-          break;
-        default:
-          break;
-      }
-      
-      // 如果是支付按钮，则在执行时禁用按钮防止重复点击
-      if (button) {
-        button.disabled = true;
-        button.textContent = '执行中...';
-      }
-      
-      fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.message === '成功' || data.message === '登录成功' || data.message === '初始化成功') {
-          if (data.data) {
-            showModal(`${actionName}执行成功`, data.message, data.data);
-          } else {
-            showModal(`${actionName}执行成功`, data.message);
-          }
-        } else {
-          showModal(`${actionName}执行失败`, data.message);
-        }
-      })
-      .catch(error => {
-        showModal(`${actionName}执行失败`, error.message);
-      })
-      .finally(() => {
-        // 请求完成后重新启用按钮
-        if (button) {
-          button.disabled = false;
-          button.textContent = '执行支付';
-        }
-      });
-    }
-    
     // 加载当前配置
     function loadCurrentConfig() {
       fetch('/config')
@@ -602,6 +471,17 @@
         .catch(error => {
           console.error('加载配置失败:', error);
         });
+    }
+    
+    // 计算总金额
+    function calculateTotalAmount() {
+      const num1000 = parseInt(document.getElementById('num1000').value) || 0;
+      const num500 = parseInt(document.getElementById('num500').value) || 0;
+      const num200 = parseInt(document.getElementById('num200').value) || 0;
+      const num100 = parseInt(document.getElementById('num100').value) || 0;
+      
+      const totalAmount = num1000 * 1000 + num500 * 500 + num200 * 200 + num100 * 100;
+      return totalAmount;
     }
     
     // 配置表单提交
@@ -626,11 +506,36 @@
       })
       .then(response => response.json())
       .then(data => {
-        showResponse('configResponse', '配置更新成功！', 'success');
+        showResponse('configResponse', '配置更新成功！总金额：￥' + calculateTotalAmount(), 'success');
       })
       .catch(error => {
         showResponse('configResponse', '配置更新失败: ' + error.message, 'error');
       });
+    });
+    
+    // 为每个数量输入框添加事件监听器，实时计算总金额
+    document.getElementById('num1000').addEventListener('input', function() {
+      document.getElementById('configResponse').textContent = '预估总金额：￥' + calculateTotalAmount();
+      document.getElementById('configResponse').className = 'response success';
+      document.getElementById('configResponse').style.display = 'block';
+    });
+    
+    document.getElementById('num500').addEventListener('input', function() {
+      document.getElementById('configResponse').textContent = '预估总金额：￥' + calculateTotalAmount();
+      document.getElementById('configResponse').className = 'response success';
+      document.getElementById('configResponse').style.display = 'block';
+    });
+    
+    document.getElementById('num200').addEventListener('input', function() {
+      document.getElementById('configResponse').textContent = '预估总金额：￥' + calculateTotalAmount();
+      document.getElementById('configResponse').className = 'response success';
+      document.getElementById('configResponse').style.display = 'block';
+    });
+    
+    document.getElementById('num100').addEventListener('input', function() {
+      document.getElementById('configResponse').textContent = '预估总金额：￥' + calculateTotalAmount();
+      document.getElementById('configResponse').className = 'response success';
+      document.getElementById('configResponse').style.display = 'block';
     });
     
     // 商店账号表单提交
@@ -793,9 +698,11 @@
         resultDiv.innerHTML = `
           <div class="stat-card">
             <h3>订单统计数据 - ${data.date}</h3>
-            <p><strong>失败订单:</strong> ${data.failed_count} 笔，￥${data.failed_amount}</p>
-            <p><strong>成功订单:</strong> ${data.succeed_count} 笔，￥${data.succeed_amount}</p>
-            <p><strong>采购订单:</strong> ${data.purchase_count} 笔，￥${data.purchase_amount}</p>
+            <p><strong>1000面额数量:</strong> ${data.num1000}</p>
+            <p><strong>500面额数量:</strong> ${data.num500}</p>
+            <p><strong>200面额数量:</strong> ${data.num200}</p>
+            <p><strong>100面额数量:</strong> ${data.num100}</p>
+            <p><strong>总金额:</strong> ￥${data.total_amount}</p>
           </div>
         `;
         resultDiv.style.display = 'grid';

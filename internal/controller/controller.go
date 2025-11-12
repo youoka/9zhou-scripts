@@ -107,7 +107,7 @@ func Hx(ctx *gin.Context) {
 		})
 		return
 	}
-	database.Db.CreateOrderStatistics(&database.OrderStatistics{
+	database.Db.SaveOrderStatistics(&database.OrderStatistics{
 		Date:          time.Now().Format("2006-01-02"),
 		FailedCount:   cancelledCount,
 		FailedAmount:  cancelledAmount,
